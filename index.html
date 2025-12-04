@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ENIGMA - FASE 4</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* ================= TEMA: JARDIM SECRETO ================= */
+    :root {
+      --bg-deep: #1a261a;
+      --primary: #e6cfa5;
+      --accent: #ffb7b2;
+      --leaf: #5f8d67;
+      --glass: rgba(30, 45, 35, 0.85);
+      --border: 1px solid rgba(230, 207, 165, 0.3);
+      --font-head: 'Playfair Display', serif;
+      --font-body: 'Lato', sans-serif;
+      --error: #ff8080;
+      --success: #a5e6b8;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+    html, body {
+      height: 100%; margin: 0; padding: 0;
+      background-color: var(--bg-deep);
+      background-image: 
+        repeating-linear-gradient(45deg, rgba(0,0,0,0.2) 0, rgba(0,0,0,0.2) 1px, transparent 0, transparent 50%),
+        radial-gradient(circle at 50% 0%, #2c4230 0%, var(--bg-deep) 70%);
+      color: var(--primary);
+      font-family: var(--font-body);
+      overflow-x: hidden; user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      padding: 20px; box-sizing: border-box;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    /* ================= CARDS ================= */
+    .card {
+      width: 100%; max-width: 400px;
+      background: var(--glass);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: var(--border);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      border-radius: 4px;
+      border-top-left-radius: 30px; border-bottom-right-radius: 30px;
+      padding: 35px 25px;
+      text-align: center;
+      position: relative;
+      animation: bloom 1s ease-out;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .card::before { content: '❦'; position: absolute; top: 10px; left: 10px; font-size: 1.5rem; color: var(--leaf); opacity: 0.6; }
+    .card::after { content: '❦'; position: absolute; bottom: 10px; right: 10px; font-size: 1.5rem; color: var(--leaf); opacity: 0.6; transform: rotate(180deg); }
+
+    @keyframes bloom { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    h2 { 
+      font-family: var(--font-head); font-weight: 700; letter-spacing: 1px;
+      color: var(--primary); font-size: 1.8rem; margin-bottom: 20px; font-style: italic;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.5); width: 100%;
+    }
+    
+    p { font-size: 1rem; line-height: 1.6; color: #d0d0d0; margin-bottom: 25px; font-weight: 300; width: 100%; }
+    
+    .hidden { display: none !important; }
+
+    /* INPUTS & BUTTONS */
+    input {
+      width: 100%; background: rgba(0,0,0,0.4);
+      border: none; border-bottom: 2px solid var(--leaf);
+      color: #fff; padding: 12px; text-align: center;
+      margin-top: 10px; font-size: 1.1rem; outline: none;
+      font-family: var(--font-head); transition: 0.3s;
+    }
+    input:focus { border-bottom-color: var(--accent); background: rgba(0,0,0,0.6); }
+    
+    .btn-action {
+      width: 100%; 
+      background: linear-gradient(to right, #2c4230, #3a553f);
+      border: 1px solid var(--leaf); color: var(--primary);
+      padding: 14px; cursor: pointer;
+      margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; font-family: var(--font-head);
+      transition: 0.1s; position: relative; overflow: hidden; user-select: none;
+    }
+    .btn-action:hover { background: var(--leaf); color: #fff; border-color: var(--primary); }
+    .btn-action:active { transform: scale(0.96); filter: brightness(1.2); }
+
+    .btn-copy {
+      background: transparent; border: 1px solid var(--primary); color: var(--primary);
+      padding: 8px 20px; border-radius: 50px; font-size: 0.75rem; cursor: pointer;
+      margin-bottom: 20px; transition: 0.3s;
+    }
+    .btn-copy:hover { background: rgba(230, 207, 165, 0.1); }
+    .feedback { min-height: 20px; font-size: 0.9rem; margin-top: 15px; font-family: var(--font-head); font-style: italic; }
+
+    /* ================= GAME 1: O CULTIVO ================= */
+    .garden-area {
+        width: 100%; height: 200px; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; margin-bottom: 10px;
+    }
+    .plant-emoji {
+        font-size: 5rem; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+    }
+    .plant-emoji.grow { transform: scale(1.3); }
+    .water-bar-container {
+        width: 80%; height: 12px; background: rgba(0,0,0,0.5);
+        border-radius: 10px; overflow: hidden; border: 1px solid var(--leaf); margin-top: 20px;
+    }
+    .water-bar-fill {
+        height: 100%; width: 0%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); transition: width 0.1s;
+    }
+
+    /* ================= GAME 2: SELO FLORAL ================= */
+    .lock-container { width: 260px; height: 260px; margin: 20px auto; position: relative; }
+    .ring {
+        position: absolute; top: 50%; left: 50%; border-radius: 50%;
+        transform: translate(-50%, -50%) rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.5, 0.6, 0.8);
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5); cursor: pointer;
+    }
+    .ring::after {
+        content: ''; position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+        width: 10px; height: 10px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary);
+    }
+    .ring-outer { width: 240px; height: 240px; border: 8px solid #2e4635; border-style: double; z-index: 1; }
+    .ring-middle { width: 160px; height: 160px; border: 15px solid #3d5c45; border-style: dotted; z-index: 2; }
+    .ring-inner { width: 80px; height: 80px; background: radial-gradient(circle, var(--accent), #5a3a3a); border: 2px solid var(--primary); z-index: 3; }
+    .lock-indicator {
+        position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+        width: 2px; height: 20px; background: var(--error); z-index: 10;
+    }
+    .lock-indicator.unlocked { background: var(--success); box-shadow: 0 0 15px var(--success); }
+
+    /* ================= GAME 3: TEIA DA VIDA ================= */
+    .web-container {
+        width: 280px; height: 280px; margin: 20px auto; position: relative;
+        touch-action: none; 
+    }
+    #webCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    .web-node {
+        position: absolute; width: 30px; height: 30px; 
+        background: var(--primary); border-radius: 50%;
+        box-shadow: 0 0 15px var(--primary), inset 0 0 5px rgba(0,0,0,0.5);
+        z-index: 2; transition: background 0.3s, transform 0.3s;
+        display: flex; justify-content: center; align-items: center; color: var(--bg-deep); font-weight: bold;
+    }
+    .web-node.active { background: var(--accent); box-shadow: 0 0 25px var(--accent); transform: scale(1.1); }
+
+    /* ================= FINAL SCREEN & ANIMAÇÃO DE FLORES ================= */
+    .code-box {
+      background: rgba(0,0,0,0.3); border-left: 2px solid var(--primary);
+      color: var(--primary); padding: 15px; font-size: 0.9rem; width: 100%;
+      margin: 10px 0; word-break: break-all; font-family: monospace;
+    }
+    .timer-display {
+      font-size: 2.5rem; color: var(--accent); margin: 15px 0;
+      text-shadow: 0 0 15px rgba(255, 183, 178, 0.4); font-family: var(--font-head);
+    }
+    .final-photo {
+        width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
+        border: 4px double var(--primary); margin: 20px auto;
+        display: block; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .final-clue-img {
+        width: 100%; max-width: 250px; height: auto;
+        border: 3px solid var(--primary); border-radius: 10px;
+        box-shadow: 0 0 25px rgba(230, 207, 165, 0.3);
+        margin: 15px auto; display: block;
+    }
+
+    /* ESTILO DAS FLORES FLUTUANTES (CSS ANIMATION) */
+    .blooming-flower {
+        position: fixed;
+        bottom: -50px;
+        font-size: 3rem;
+        pointer-events: none;
+        z-index: 9999;
+        animation: floatUp 5s ease-out forwards;
+        filter: drop-shadow(0 0 10px rgba(255,183,178,0.5));
+    }
+
+    @keyframes floatUp {
+        0% { transform: translateY(0) scale(0) rotate(0deg); opacity: 0; }
+        20% { opacity: 1; transform: translateY(-20vh) scale(1.5) rotate(45deg); }
+        100% { transform: translateY(-100vh) scale(1) rotate(180deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="screenPassword">
+    <h2>Fase 4: O Jardim</h2>
+    <p>A natureza guarda seus segredos.</p>
+    <div class="code-box" id="b64text">...</div>
+    <button class="btn-copy" onclick="copyCode()">COPIAR CHAVE</button>
+    <input id="passInput" placeholder="Digite a senha..." style="text-transform: uppercase;">
+    <button class="btn-action" onclick="checkPhasePass()">Entrar no Jardim</button>
+    <div id="passFeedback" class="feedback"></div>
+  </div>
+
+  <div class="card hidden" id="screenIntro">
+    <h2>Jardim Secreto</h2>
+    <p>Bem-vinda, meu amor.</p>
+    <p>Você deixou as estrelas e pousou em um lugar de crescimento e memória.</p>
+	<p>Agora você pode cuidar e caminhar pelo nosso jardim!
+    <button class="btn-action" onclick="nextScreen('screenQ1')">Caminhar</button>
+  </div>
+
+  <div class="card hidden" id="screenQ1">
+    <h2>A Melodia</h2>
+    <p>"Se nossa história tivesse uma trilha sonora, qual é a música que define nosso começo?"</p>
+    <input id="inputQ1" placeholder="Nome da música...">
+    <button class="btn-action" onclick="checkQ1()">Responder</button>
+	<p id="cultivoStatus" style="font-size: 0.9rem; color: var(--accent);">💡DICA: Instagram</p>
+    <div id="feedQ1" class="feedback" style="color: var(--error)"></div>
+  </div>
+
+  <div class="card hidden" id="screenGame1">
+    <h2>O Cultivo</h2>
+    <p>Toque repetidamente em <b>REGAR</b> para fazer a flor desabrochar.</p>
+    <p id="cultivoStatus" style="font-size: 0.9rem; color: var(--accent);">Flor 1/3</p>
+    <div class="garden-area">
+        <div class="plant-emoji" id="plantEmoji">🌱</div>
+        <div class="water-bar-container">
+            <div class="water-bar-fill" id="waterBar"></div>
+        </div>
+    </div>
+    <button id="btnWater" class="btn-action" onclick="clickWater()">💦 REGAR 💦</button>
+  </div>
+
+  <div class="card hidden" id="screenQ2">
+    <h2>A Jornada</h2>
+    <p>"Quando foi a primeira vez em que lhe dei flores?"</p>
+    <input id="inputQ2" placeholder="Data...">
+    <button class="btn-action" onclick="checkQ2()">Responder</button>
+    <div id="feedQ2" class="feedback" style="color: var(--error)"></div>
+  </div>
+
+  <div class="card hidden" id="screenGame2">
+    <h2>O Selo Floral</h2>
+    <p>Toque nos anéis para girá-los. Alinhe os marcadores dourados com a linha vermelha no topo.</p>
+    <div class="lock-container">
+        <div class="lock-indicator" id="lockInd"></div>
+        <div class="ring ring-outer" id="ring1" onclick="rotateRing(1)"></div>
+        <div class="ring ring-middle" id="ring2" onclick="rotateRing(2)"></div>
+        <div class="ring ring-inner" id="ring3" onclick="rotateRing(3)"></div>
+    </div>
+    <div id="lockMsg" class="feedback"></div>
+  </div>
+
+  <div class="card hidden" id="screenQ3">
+    <h2>A Raiz</h2>
+    <p>"Tenho raízes que ninguém vê, sou mais alta que as árvores, subo, subo e nunca cresço. O que sou?"</p>
+    <input id="inputQ3" placeholder="Sua resposta...">
+    <button class="btn-action" onclick="checkQ3()">Revelar Segredo</button>
+    <div id="feedQ3" class="feedback" style="color: var(--error)"></div>
+  </div>
+
+  <div class="card hidden" id="screenGame3">
+    <h2>A Teia da Vida</h2>
+    <p>Conecte os pontos de luz em um único traço contínuo para revitalizar a energia do jardim. Arraste o dedo entre eles.</p>
+    <div class="web-container" id="webContainer">
+        <canvas id="webCanvas" width="280" height="280"></canvas>
+    </div>
+    <div id="webMsg" class="feedback"></div>
+  </div>
+
+  <div class="card hidden" id="screenFinal">
+    <h2>Fase 4 Completa</h2>
+    <p>Parabéns meu amor, mais uma vez o jardim floresceu para você.</p>
+	<p>E dessa vez você está mais perto do que imagina!</p>
+    
+    <img src="foto4.jpg" class="final-photo" onerror="this.style.display='none'">
+
+    <div style="margin: 20px 0;">
+      <p style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 3px; opacity: 0.8;">Quarta Pista:</p>
+      <img src="pista.jpg" class="final-clue-img" alt="Pista Final">
+    </div>
+
+    <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; width: 100%;">
+      <p>A próxima fase desbloqueia em:</p>
+      <div class="timer-display" id="countdownDisplay">12:00:00</div>
+    </div>
+  </div>
+
+<script>
+  /* ================= CONFIGURAÇÕES (EDITE AQUI!) ================= */
+  const PHASE_PASS = "FLORESCER"; 
+  const ANSWER_1 = "aliança";      
+  const ANSWER_2 = "04/11";      
+  const ANSWER_3 = "montanha";    
+  const UNLOCK_HOURS = 12;        
+
+  /* ================= ÁUDIO ================= */
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  function playNote(freq, type='triangle', decay=1, vol=0.1) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + decay);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + decay);
+  }
+  function soundSuccess() { playNote(440,'sine',1); setTimeout(()=>playNote(554,'sine',1),100); setTimeout(()=>playNote(659,'sine',1.5),200); }
+  function soundError() { playNote(150,'sawtooth',0.5); }
+  function soundClick() { playNote(800,'triangle',0.1); }
+  function soundWater() { playNote(600+Math.random()*200,'sine',0.1); }
+  function soundConnect() { playNote(1000,'sine',0.3, 0.05); }
+
+  /* ================= NAVEGAÇÃO ================= */
+  function nextScreen(id) {
+    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+  window.onload = () => {
+    document.getElementById('b64text').innerText = btoa(PHASE_PASS);
+    if(localStorage.getItem('fase4_complete')) { nextScreen('screenFinal'); startBloomingAnimation(); startCountdown(); }
+  };
+
+  /* --- LOGICA PERGUNTAS --- */
+  function copyCode() { navigator.clipboard.writeText(document.getElementById('b64text').innerText); }
+  function checkPhasePass() { if (passInput.value.trim().toUpperCase() === PHASE_PASS) { soundSuccess(); nextScreen('screenIntro'); } else { soundError(); passFeedback.innerText = "Senha incorreta."; } }
+  function checkQ1() { if (inputQ1.value.trim().toLowerCase().includes(ANSWER_1)) { soundSuccess(); nextScreen('screenGame1'); initWaterGame(); } else { soundError(); feedQ1.innerText = "Resposta incorreta."; } }
+  function checkQ2() { if (inputQ2.value.trim().toLowerCase().includes(ANSWER_2)) { soundSuccess(); nextScreen('screenGame2'); randomizeLocks(); } else { soundError(); feedQ2.innerText = "Resposta incorreta."; } }
+  function checkQ3() { if (inputQ3.value.trim().toLowerCase().includes(ANSWER_3)) { soundSuccess(); nextScreen('screenGame3'); initWebGame(); } else { soundError(); feedQ3.innerText = "Resposta incorreta."; } }
+
+  /* --- GAME 1: O CULTIVO --- */
+  let flowerLevel = 0, waterProgress = 0, currentFlowerCount = 1;
+  const flowers = ["🌱", "🌿", "🌷", "🌹"];
+  function initWaterGame() { flowerLevel = 0; waterProgress = 0; currentFlowerCount = 1; updateFlowerUI(); }
+  function clickWater() {
+    soundWater(); waterProgress += 10;
+    const plant = document.getElementById('plantEmoji'); plant.classList.add('grow'); setTimeout(() => plant.classList.remove('grow'), 100);
+    if (waterProgress > 100) waterProgress = 100;
+    document.getElementById('waterBar').style.width = waterProgress + "%";
+    if (waterProgress > 30 && flowerLevel === 0) { flowerLevel = 1; updateFlowerEmoji(); }
+    if (waterProgress > 60 && flowerLevel === 1) { flowerLevel = 2; updateFlowerEmoji(); }
+    if (waterProgress >= 100 && flowerLevel === 2) { flowerLevel = 3; updateFlowerEmoji(); soundSuccess(); setTimeout(nextFlower, 1000); }
+  }
+  function updateFlowerEmoji() { document.getElementById('plantEmoji').innerText = flowers[flowerLevel]; }
+  function updateFlowerUI() { flowerLevel = 0; waterProgress = 0; document.getElementById('waterBar').style.width = "0%"; updateFlowerEmoji(); document.getElementById('cultivoStatus').innerText = `Flor ${currentFlowerCount}/3`; }
+  function nextFlower() { if (currentFlowerCount < 3) { currentFlowerCount++; updateFlowerUI(); } else { nextScreen('screenQ2'); } }
+
+  /* --- GAME 2: ROTAÇÃO --- */
+  let rots = [0, 0, 0];
+  function randomizeLocks() { rots = [Math.floor(Math.random()*5+1)*60, Math.floor(Math.random()*5+1)*60, Math.floor(Math.random()*5+1)*60]; updateRings(); }
+  function rotateRing(id) { soundClick(); rots[id-1] += 60; updateRings(); checkUnlock(); }
+  function updateRings() { document.getElementById('ring1').style.transform = `translate(-50%, -50%) rotate(${rots[0]}deg)`; document.getElementById('ring2').style.transform = `translate(-50%, -50%) rotate(${rots[1]}deg)`; document.getElementById('ring3').style.transform = `translate(-50%, -50%) rotate(${rots[2]}deg)`; }
+  function checkUnlock() { if(rots[0]%360===0 && rots[1]%360===0 && rots[2]%360===0) { document.getElementById('lockInd').classList.add('unlocked'); soundSuccess(); document.getElementById('lockMsg').innerText = "SINCRONIZADO!"; document.getElementById('lockMsg').style.color = "var(--success)"; setTimeout(() => nextScreen('screenQ3'), 1500); } }
+
+  /* --- GAME 3: TEIA DA VIDA --- */
+  let webNodes = [], webPath = [], isDrawingWeb = false;
+  const webCanvas = document.getElementById('webCanvas');
+  const webCtx = webCanvas.getContext('2d');
+  const nodeCoords = [ {x:140, y:40}, {x:260, y:120}, {x:220, y:240}, {x:60, y:240}, {x:20, y:120} ];
+
+  function initWebGame() {
+      const container = document.getElementById('webContainer');
+      document.querySelectorAll('.web-node').forEach(n => n.remove());
+      webNodes = []; webPath = []; isDrawingWeb = false;
+      webCtx.clearRect(0,0,280,280);
+
+      nodeCoords.forEach((coord, i) => {
+          let node = document.createElement('div');
+          node.className = 'web-node';
+          node.style.left = (coord.x - 15) + 'px';
+          node.style.top = (coord.y - 15) + 'px';
+          container.appendChild(node);
+          webNodes.push({ element: node, x: coord.x, y: coord.y, id: i });
+      });
+
+      container.onpointerdown = handleWebStart;
+      container.onpointermove = handleWebMove;
+      container.onpointerup = handleWebEnd;
+  }
+  function handleWebStart(e) { isDrawingWeb = true; webPath = []; webNodes.forEach(n => n.element.classList.remove('active')); checkNodeHit(e); }
+  function handleWebMove(e) { if(!isDrawingWeb) return; checkNodeHit(e); drawWeb(); }
+  function handleWebEnd(e) {
+      isDrawingWeb = false;
+      if(webPath.length === webNodes.length) {
+          soundSuccess(); document.getElementById('webMsg').innerText = "ENERGIA RESTAURADA!"; document.getElementById('webMsg').style.color = "var(--success)";
+          document.getElementById('webContainer').onpointerdown = null; setTimeout(finishPhase4, 1500);
+      } else {
+          webPath = []; webNodes.forEach(n => n.element.classList.remove('active')); webCtx.clearRect(0,0,280,280);
+      }
+  }
+  function checkNodeHit(e) {
+    const rect = document.getElementById('webContainer').getBoundingClientRect();
+    const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+    webNodes.forEach(node => {
+        const dist = Math.sqrt((x - node.x)**2 + (y - node.y)**2);
+        if(dist < 30) { if(!webPath.includes(node.id)) { if(webPath.length > 0) soundConnect(); webPath.push(node.id); node.element.classList.add('active'); } }
+    });
+  }
+  function drawWeb() {
+      webCtx.clearRect(0,0,280,280); if(webPath.length < 2) return;
+      webCtx.beginPath(); webCtx.moveTo(webNodes[webPath[0]].x, webNodes[webPath[0]].y);
+      for(let i=1; i<webPath.length; i++) { webCtx.lineTo(webNodes[webPath[i]].x, webNodes[webPath[i]].y); }
+      webCtx.strokeStyle = '#ffb7b2'; webCtx.lineWidth = 4; webCtx.lineCap = 'round'; webCtx.lineJoin = 'round'; webCtx.shadowBlur = 10; webCtx.shadowColor = '#ffb7b2'; webCtx.stroke();
+  }
+
+  /* --- FINALIZAÇÃO E ANIMAÇÃO DE FLORES --- */
+  function finishPhase4() {
+      nextScreen('screenFinal');
+      startBloomingAnimation(); // Chama a nova animação de flores
+      localStorage.setItem('fase4_complete', 'true');
+      if(!localStorage.getItem('fase5_unlock')) {
+          localStorage.setItem('fase5_unlock', Date.now() + (UNLOCK_HOURS * 60 * 60 * 1000));
+      }
+      startCountdown();
+  }
+
+  function startBloomingAnimation() {
+    const flowers = ['🌸', '🌹', '🌺', '🌻', '🌷', '🪷'];
+    let count = 0;
+    const interval = setInterval(() => {
+        const f = document.createElement('div');
+        f.innerText = flowers[Math.floor(Math.random() * flowers.length)];
+        f.className = 'blooming-flower';
+        f.style.left = Math.random() * 95 + 'vw';
+        f.style.animationDuration = (Math.random() * 3 + 3) + 's'; 
+        document.body.appendChild(f);
+        setTimeout(() => f.remove(), 6000);
+        count++;
+        if(count >= 50) clearInterval(interval);
+    }, 150);
+  }
+
+  /* --- COUNTDOWN --- */
+  function startCountdown() {
+    const unlockTime = parseInt(localStorage.getItem('fase5_unlock'));
+    const display = document.getElementById("countdownDisplay");
+    setInterval(() => {
+      const now = Date.now(); const diff = unlockTime - now;
+      if (diff <= 0) { display.innerText = "FASE FINAL DISPONÍVEL"; display.style.color = "var(--success)"; return; }
+      const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+      const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+      display.innerText = `${h}:${m}:${s}`;
+    }, 1000);
+  }
+</script>
+</body>
+</html>
