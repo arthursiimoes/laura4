@@ -162,10 +162,7 @@
       color: var(--primary); padding: 15px; font-size: 0.9rem; width: 100%;
       margin: 10px 0; word-break: break-all; font-family: monospace;
     }
-    .timer-display {
-      font-size: 2.5rem; color: var(--accent); margin: 15px 0;
-      text-shadow: 0 0 15px rgba(255, 183, 178, 0.4); font-family: var(--font-head);
-    }
+    /* Classe timer removida ou reutilizada se quiser */
     .final-photo {
         width: 150px; height: 150px; border-radius: 50%; object-fit: cover;
         border: 4px double var(--primary); margin: 20px auto;
@@ -288,8 +285,9 @@
     </div>
 
     <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; width: 100%;">
-      <p>A próxima fase desbloqueia em:</p>
-      <div class="timer-display" id="countdownDisplay">12:00:00</div>
+      <button class="btn-action" onclick="window.location.href='https://arthursiimoes.github.io/laura5'">
+        IR PARA FASE FINAL 🌹
+      </button>
     </div>
   </div>
 
@@ -299,7 +297,7 @@
   const ANSWER_1 = "aliança";      
   const ANSWER_2 = "04/11";      
   const ANSWER_3 = "montanha";    
-  const UNLOCK_HOURS = 12;        
+  // UNLOCK_HOURS removido
 
   /* ================= ÁUDIO ================= */
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -326,7 +324,11 @@
   }
   window.onload = () => {
     document.getElementById('b64text').innerText = btoa(PHASE_PASS);
-    if(localStorage.getItem('fase4_complete')) { nextScreen('screenFinal'); startBloomingAnimation(); startCountdown(); }
+    // Verifica se já finalizou
+    if(localStorage.getItem('fase4_complete')) { 
+        nextScreen('screenFinal'); 
+        startBloomingAnimation(); 
+    }
   };
 
   /* --- LOGICA PERGUNTAS --- */
@@ -414,12 +416,9 @@
   /* --- FINALIZAÇÃO E ANIMAÇÃO DE FLORES --- */
   function finishPhase4() {
       nextScreen('screenFinal');
-      startBloomingAnimation(); // Chama a nova animação de flores
+      startBloomingAnimation(); 
       localStorage.setItem('fase4_complete', 'true');
-      if(!localStorage.getItem('fase5_unlock')) {
-          localStorage.setItem('fase5_unlock', Date.now() + (UNLOCK_HOURS * 60 * 60 * 1000));
-      }
-      startCountdown();
+      // Código de timer removido, redirecionamento imediato disponível
   }
 
   function startBloomingAnimation() {
@@ -438,19 +437,7 @@
     }, 150);
   }
 
-  /* --- COUNTDOWN --- */
-  function startCountdown() {
-    const unlockTime = parseInt(localStorage.getItem('fase5_unlock'));
-    const display = document.getElementById("countdownDisplay");
-    setInterval(() => {
-      const now = Date.now(); const diff = unlockTime - now;
-      if (diff <= 0) { display.innerText = "FASE FINAL DISPONÍVEL"; display.style.color = "var(--success)"; return; }
-      const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
-      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
-      const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
-      display.innerText = `${h}:${m}:${s}`;
-    }, 1000);
-  }
+  // startCountdown() REMOVIDO
 </script>
 </body>
 </html>
